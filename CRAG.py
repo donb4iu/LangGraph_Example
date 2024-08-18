@@ -41,7 +41,7 @@ models = "openai"
 openai_api_key = "Your_API_KEY"
 google_api_key = "Your_API_KEY"
 local_llm = 'llama3.1'
-local_llm_base_url = 'http://192.168.2.38:11434'
+local_llm_base_url = 'http://192.168.2.39:11434'
 os.environ["TAVILY_API_KEY"] = ""
         
 
@@ -446,7 +446,7 @@ import streamlit as st
 
 
 def main():
-
+  st.set_page_config("LangGraph Demo")
   
   st.title("LangGraph + Function Call + Amazaon Scraper 👾")
   # Add a sidebar for model selection
