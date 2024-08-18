@@ -33,7 +33,7 @@ load_dotenv()
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 
 run_local = 'Yes'
@@ -41,6 +41,7 @@ models = "openai"
 openai_api_key = "Your_API_KEY"
 google_api_key = "Your_API_KEY"
 local_llm = 'llama3.1'
+local_llm_base_url = 'http://192.168.2.38:11434'
 os.environ["TAVILY_API_KEY"] = ""
         
 
@@ -61,9 +62,6 @@ lst_ids = [f"chunk_{idx+1}" for idx, _ in enumerate(all_splits)]
 
 texts = [chunk.page_content for chunk in all_splits]
 
-# Encode the text
-embeddings = [model.encode(text).tolist() for text in texts]
-
 # Generate IDs for each chunk
 lst_ids = [f"chunk_{idx+1}" for idx, _ in enumerate(all_splits)]
 
@@ -73,7 +71,7 @@ lst_docs = [metadata for metadata in enumerate(all_splits)]
 if run_local == 'Yes':
 #    #embeddings = GPT4AllEmbeddings()
 #    embeddings = [model.encode(text).tolist() for text in all_splits]
-    embeddings = OllamaEmbeddings(model="llama3.1", base_url="http://192.168.2.39:11434")
+    embeddings = OllamaEmbeddings(model=local_llm, base_url=local_llm_base_url)
 elif models == 'openai':
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
 else:
@@ -161,8 +159,7 @@ def generate(state):
 
     # LLM Setup
     if run_local == "Yes":
-        llm = ChatOllama(model=local_llm, 
-                        temperature=0)
+        llm = ChatOllama(model=local_llm, base_url=local_llm_base_url, temperature=0)
     elif models == "openai" :
         llm = ChatOpenAI(
             model="gpt-4-0125-preview", 
@@ -208,8 +205,7 @@ def grade_documents(state):
 
     # LLM
     if run_local == "Yes":
-        llm = ChatOllama(model=local_llm, 
-                        temperature=0)
+        llm = ChatOllama(model=local_llm, base_url=local_llm_base_url, temperature=0)
     elif models == "openai" :
         llm = ChatOpenAI(
             model="gpt-4-0125-preview", 
@@ -309,8 +305,7 @@ def transform_query(state):
     # Grader
     # LLM
     if run_local == "Yes":
-        llm = ChatOllama(model=local_llm, 
-                        temperature=0)
+        llm = ChatOllama(model=local_llm, base_url=local_llm_base_url, temperature=0)
     elif models == "openai" :
         llm = ChatOpenAI(
             model="gpt-4-0125-preview", 
