@@ -9,6 +9,8 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_models import ChatOllama
 from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain.embeddings import OllamaEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -18,15 +20,27 @@ from typing import Dict, TypedDict
 from langchain.prompts import PromptTemplate
 import pprint
 import os
+import chromadb
+from sentence_transformers import SentenceTransformer
+from typing import List
+
+
 # Load environment variables
+
+# Set the environment variable
+os.environ['USER_AGENT'] = 'chat/1.0 (pantomath42@nc.rr.com'
 load_dotenv()
 
+import logging
 
-run_local = 'No'
+logging.basicConfig(level=logging.DEBUG)
+
+
+run_local = 'Yes'
 models = "openai"
 openai_api_key = "Your_API_KEY"
 google_api_key = "Your_API_KEY"
-local_llm = 'Solar'
+local_llm = 'llama3.1'
 os.environ["TAVILY_API_KEY"] = ""
         
 
@@ -42,10 +56,24 @@ text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
 )
 all_splits = text_splitter.split_documents(docs)
 
+   
+lst_ids = [f"chunk_{idx+1}" for idx, _ in enumerate(all_splits)]
 
+texts = [chunk.page_content for chunk in all_splits]
+
+# Encode the text
+embeddings = [model.encode(text).tolist() for text in texts]
+
+# Generate IDs for each chunk
+lst_ids = [f"chunk_{idx+1}" for idx, _ in enumerate(all_splits)]
+
+lst_docs = [metadata for metadata in enumerate(all_splits)]
+              
 # Embed and index
 if run_local == 'Yes':
-    embeddings = GPT4AllEmbeddings()
+#    #embeddings = GPT4AllEmbeddings()
+#    embeddings = [model.encode(text).tolist() for text in all_splits]
+    embeddings = OllamaEmbeddings(model="llama3.1", base_url="http://192.168.2.39:11434")
 elif models == 'openai':
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
 else:
@@ -54,10 +82,27 @@ else:
     )
 
 # Index
+###
+#db = chromadb.PersistentClient("full")
+#db.list_collections()
+collection_name = "rag-chroma"
+
+#if collection_name in [c.name for c in db.list_collections()]:
+#    db.delete_collection(collection_name)
+#    print("--- deleted ---")
+    
+#vectorstore = db.create_collection(name=collection_name)
+
+#vectorstore.add(
+#    documents=texts, 
+#    ids=lst_ids, 
+#    embeddings=embeddings
+#)
+
 vectorstore = Chroma.from_documents(
     documents=all_splits,
-    collection_name="rag-chroma",
-    embedding=embeddings,
+    collection_name=collection_name,
+    embedding=embeddings
 )
 retriever = vectorstore.as_retriever()
 print(retriever)
